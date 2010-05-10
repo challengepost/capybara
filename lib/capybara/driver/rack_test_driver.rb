@@ -192,7 +192,7 @@ class Capybara::Driver::RackTest < Capybara::Driver::Base
 
   def process(method, path, attributes = {})
     return if path.gsub(/^#{current_path}/, '') =~ /^#/
-    send(method, path, attributes, env)
+    send(method, "http://#{Capybara.app_host}#{path}", attributes, env)
     follow_redirects!
   end
 
@@ -206,18 +206,18 @@ class Capybara::Driver::RackTest < Capybara::Driver::Base
 
   def submit(method, path, attributes)
     path = current_path if not path or path.empty?
-    send(method, path, attributes, env)
+    send(method, "http://#{Capybara.app_host}#{path}", attributes, env)
     follow_redirects!
   end
 
   def find(selector)
     html.xpath(selector).map { |node| Node.new(self, node) }
   end
-  
+
   def body
     @body ||= response.body
   end
-  
+
   def html
     @html ||= Nokogiri::HTML(body)
   end
@@ -227,7 +227,7 @@ class Capybara::Driver::RackTest < Capybara::Driver::Base
   def post(*args, &block); reset_cache; super; end
   def put(*args, &block); reset_cache; super; end
   def delete(*args, &block); reset_cache; super; end
-  
+
 private
 
   def reset_cache
