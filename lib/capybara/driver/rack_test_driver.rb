@@ -75,7 +75,8 @@ class Capybara::Driver::RackTest < Capybara::Driver::Base
     def click
       if tag_name == 'a'
         method = self["data-method"] || :get
-        driver.process(method, self[:href].to_s)
+        path = URI.parse(self[:href].to_s).request_uri if self[:href].to_s =~ /^http/
+        driver.process(method, path)
       elsif (tag_name == 'input' or tag_name == 'button') and %w(submit image).include?(type)
         Form.new(driver, form).submit(self)
       end
