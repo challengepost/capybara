@@ -25,18 +25,18 @@ class Capybara::Driver::Selenium < Capybara::Driver::Base
     end
 
     def set(value)
-      if tag_name == 'textarea' or (tag_name == 'input' and %w(text password hidden file).include?(type))
-        node.clear
-        node.send_keys(value.to_s)
-      elsif tag_name == 'input' and type == 'radio'
+      if tag_name == 'input' and type == 'radio'
         node.click
       elsif tag_name == 'input' and type == 'checkbox'
         node.click if node.attribute('checked') != value
+      elsif tag_name == 'textarea' or tag_name == 'input'
+        node.clear
+        node.send_keys(value.to_s)
       end
     end
 
     def select(option)
-      option_node = node.find_element(:xpath, ".//option[text()=#{Capybara::XPath.escape(option)}]") || node.find_element(:xpath, ".//option[contains(.,#{Capybara::XPath.escape(option)})]")
+      option_node = node.find_element(:xpath, ".//option[normalize-space(text())=#{Capybara::XPath.escape(option)}]") || node.find_element(:xpath, ".//option[contains(.,#{Capybara::XPath.escape(option)})]")
       option_node.select
     rescue 
       options = node.find_elements(:xpath, "//option").map { |o| "'#{o.text}'" }.join(', ')
@@ -49,7 +49,7 @@ class Capybara::Driver::Selenium < Capybara::Driver::Base
       end
 
       begin
-        option_node = node.find_element(:xpath, ".//option[text()=#{Capybara::XPath.escape(option)}]") || node.find_element(:xpath, ".//option[contains(.,#{Capybara::XPath.escape(option)})]")
+        option_node = node.find_element(:xpath, ".//option[normalize-space(text())=#{Capybara::XPath.escape(option)}]") || node.find_element(:xpath, ".//option[contains(.,#{Capybara::XPath.escape(option)})]")
         option_node.clear
       rescue
         options = node.find_elements(:xpath, "//option").map { |o| "'#{o.text}'" }.join(', ')
@@ -70,17 +70,9 @@ class Capybara::Driver::Selenium < Capybara::Driver::Base
     end
 
     def visible?
-        begin
-            node.displayed? and node.displayed? != "false"
-        rescue Selenium::WebDriver::Error::WebDriverError
-            # rescues the inevitable "Selenium::WebDriver::Error::WebDriverError: element is obsolete" if you check to see if an element that has been removed from the DOM is visible
-            return false
-        end
+      node.displayed? and node.displayed? != "false"
     end
     
-    def trigger(event)
-    end
-
   private
 
     def all_unfiltered(locator)
@@ -132,6 +124,10 @@ class Capybara::Driver::Selenium < Capybara::Driver::Base
   end
 
   def wait?; true; end
+
+  def execute_script(script)
+    browser.execute_script script
+  end
 
   def evaluate_script(script)
     browser.execute_script "return #{script}"

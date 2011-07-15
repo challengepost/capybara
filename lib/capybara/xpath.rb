@@ -111,7 +111,7 @@ module Capybara
 
     def text_field(locator, options={})
       options = options.merge(:value => options[:with]) if options.has_key?(:with)
-      add_field(locator, "//input[@type!='radio' and @type!='checkbox' and @type!='hidden']", options)
+      add_field(locator, "//input[not(@type) or (@type!='radio' and @type!='checkbox' and @type!='hidden')]", options)
     end
 
     def text_area(locator, options={})
@@ -163,8 +163,8 @@ module Capybara
           when :text      then postfix += "[text()=#{s(value)}]"
           when :checked   then postfix += "[@checked]"
           when :unchecked then postfix += "[not(@checked)]"
-          when :options   then postfix += value.map { |o| "[./option/text()=#{s(o)}]" }.join
-          when :selected  then postfix += [value].flatten.map { |o| "[./option[@selected]/text()=#{s(o)}]" }.join
+          when :options   then postfix += value.map { |o| "[.//option/text()=#{s(o)}]" }.join
+          when :selected  then postfix += [value].flatten.map { |o| "[.//option[@selected]/text()=#{s(o)}]" }.join
         end
         postfix
       end
