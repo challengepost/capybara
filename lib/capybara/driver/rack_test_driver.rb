@@ -83,6 +83,7 @@ class Capybara::Driver::RackTest < Capybara::Driver::Base
       if tag_name == 'a'
         method = self["data-method"] || :get
         path = self[:href].to_s
+        Capybara.app_host = URI.parse(path).host if path =~ /^http/
         path = URI.parse(path).request_uri if path =~ /^http/
         driver.process(method, path)
       elsif (tag_name == 'input' or tag_name == 'button') and %w(submit image).include?(type)
@@ -202,6 +203,7 @@ class Capybara::Driver::RackTest < Capybara::Driver::Base
 
   def process(method, path, attributes = {})
     return if path.gsub(/^#{request_path}/, '') =~ /^#/
+    Capybara.app_host = URI.parse(path).host if path =~ /^http/
     send(method, "http://#{Capybara.app_host}#{path}", attributes, env)
     follow_redirects!
   end
@@ -249,7 +251,10 @@ class Capybara::Driver::RackTest < Capybara::Driver::Base
 
   def follow_redirects!
     10.times do
-      follow_redirect! if response.redirect?
+      if response.redirect?
+        Capybara.app_host = URI.parse(response['Location']).host
+        follow_redirect!
+      end
     end
     raise Capybara::InfiniteRedirectError, "redirected more than 10 times, check for infinite redirects." if response.redirect?
   end
